@@ -23,14 +23,14 @@ CREATE TABLE employees (
   "birth_date"  DATE         NOT NULL,
   "phone"       NUMBER       NOT NULL,
   "position_id" NUMBER       NOT NULL,
-  FOREIGN KEY ("position_id") REFERENCES position ("position_id")
+  CONSTRAINT position_key
+  FOREIGN KEY ("position_id") REFERENCES position("position_id")
+  ON DELETE CASCADE
 );
 
 CREATE TABLE client (
   "client_id"   NUMBER PRIMARY KEY,
   "client_name" VARCHAR2(64) NOT NULL,
-  "salon_id"    NUMBER       NOT NULL,
-  FOREIGN KEY ("salon_id") REFERENCES salons ("salon_id"),
   "phone"       VARCHAR2(64)
 );
 
@@ -39,32 +39,40 @@ CREATE TABLE dog (
   "dog_name"  VARCHAR2(64) NOT NULL,
   "dog_breed" VARCHAR2(32) NOT NULL,
   "client_id" NUMBER,
-  FOREIGN KEY ("client_id") REFERENCES client ("client_id"),
+  CONSTRAINT client_id_key
+  FOREIGN KEY ("client_id") REFERENCES client("client_id") ON DELETE CASCADE,
   "weight"    NUMBER,
   "age"       NUMBER,
   "sex"       VARCHAR2(64)
 );
+
 CREATE TABLE salary (
-  "salon_id"    NUMBER NOT NULL,
-  FOREIGN KEY ("salon_id") REFERENCES salons ("salon_id"),
-  "position_id" NUMBER NOT NULL,
-  FOREIGN KEY ("position_id") REFERENCES position ("position_id"),
-  "salary"      NUMBER NOT NULL
+  "empl_id" NUMBER NOT NULL,
+  CONSTRAINT empl_id_key
+  FOREIGN KEY ("empl_id") REFERENCES employees("empl_id") ON DELETE CASCADE,
+  "salary" NUMBER NOT NULL
 );
 
 CREATE TABLE timetable (
   id              NUMBER PRIMARY KEY,
   "salon_id"      NUMBER,
-  FOREIGN KEY ("salon_id") REFERENCES salons ("salon_id"),
+  CONSTRAINT salon_id_keys
+  FOREIGN KEY ("salon_id") REFERENCES salons("salon_id") ON DELETE CASCADE,
+
   "service_id"    NUMBER,
-  FOREIGN KEY ("service_id") REFERENCES service_type ("service_id"),
+  CONSTRAINT service_id_keys
+  FOREIGN KEY ("service_id") REFERENCES service_type("service_id") ON DELETE CASCADE,
+
   "empl_id"       NUMBER,
-  FOREIGN KEY ("empl_id") REFERENCES employees ("empl_id"),
+  CONSTRAINT empl_id_keys
+  FOREIGN KEY ("empl_id") REFERENCES employees("empl_id") ON DELETE CASCADE,
   "client_id"     NUMBER,
-  FOREIGN KEY ("client_id") REFERENCES client ("client_id"),
+  CONSTRAINT client_id_keys
+  FOREIGN KEY ("client_id") REFERENCES client("client_id") ON DELETE CASCADE,
   "date_and_time" TIMESTAMP ,
   "dog_id"        NUMBER,
-  FOREIGN KEY ("dog_id") REFERENCES dog ("dog_id")
+  CONSTRAINT dog_id_keys
+  FOREIGN KEY ("dog_id") REFERENCES dog("dog_id") ON DELETE CASCADE
 );
 
 CREATE OR REPLACE TRIGGER date_and_time_constraint
@@ -113,11 +121,13 @@ CREATE TABLE payment (
 
 CREATE TABLE history (
   "history_id" NUMBER,
-  FOREIGN KEY ("history_id") REFERENCES timetable (id),
+  CONSTRAINT history_id_keys
+  FOREIGN KEY ("history_id") REFERENCES timetable(id) ON DELETE CASCADE,
   "payment_id" NUMBER,
-  FOREIGN KEY ("payment_id") REFERENCES payment ("payment_id")
+  CONSTRAINT payment_id_key
+  FOREIGN KEY ("payment_id") REFERENCES payment ("payment_id") ON DELETE CASCADE
 );
-
+--------------------- INSEART ----------------------
 INSERT INTO salons("salon_id", "location") VALUES (1, 'Парк Победы');
 INSERT INTO salons("salon_id", "location") VALUES (2, 'Горьковская');
 INSERT INTO salons("salon_id", "location") VALUES (3, 'Петроградская');
@@ -158,18 +168,18 @@ INSERT INTO employees ("empl_id", "photo", "empl_name", "birth_date", "phone", "
   (5, NULL, 'Всеволод', '01-01-1988', '89219923232', 3);
 
 
-INSERT INTO client ("client_id", "client_name", "salon_id", "phone") VALUES
-  (1, 'Анна', 1, '89967726506');
-INSERT INTO client ("client_id", "client_name", "salon_id", "phone") VALUES
-  (2, 'Евгений', 5, '89219294565');
-INSERT INTO client ("client_id", "client_name", "salon_id", "phone") VALUES
-  (3, 'Антон', 3, '89321234343');
-INSERT INTO client ("client_id", "client_name", "salon_id", "phone") VALUES
-  (4, 'Дарья', 2, '89356547689');
-INSERT INTO client ("client_id", "client_name", "salon_id", "phone") VALUES
-  (5, 'Александра', 4, '89453211234');
-INSERT INTO client ("client_id", "client_name", "salon_id", "phone") VALUES
-  (6, 'Надежда', 1, '89113456578');
+INSERT INTO client ("client_id", "client_name", "phone") VALUES
+  (1, 'Анна',  '89967726506');
+INSERT INTO client ("client_id", "client_name", "phone") VALUES
+  (2, 'Евгений', '89219294565');
+INSERT INTO client ("client_id", "client_name", "phone") VALUES
+  (3, 'Антон', '89321234343');
+INSERT INTO client ("client_id", "client_name", "phone") VALUES
+  (4, 'Дарья', '89356547689');
+INSERT INTO client ("client_id", "client_name", "phone") VALUES
+  (5, 'Александра', '89453211234');
+INSERT INTO client ("client_id", "client_name", "phone") VALUES
+  (6, 'Надежда', '89113456578');
 
 INSERT INTO dog ("dog_id", "dog_name", "dog_breed", "client_id", "weight", "age", "sex") VALUES 
   (1, 'Эмми', 'Йоркширский терьер', 1, 2.5, 1, 'девочка');
@@ -184,11 +194,11 @@ INSERT INTO dog ("dog_id", "dog_name", "dog_breed", "client_id", "weight", "age"
 INSERT INTO dog ("dog_id", "dog_name", "dog_breed", "client_id", "weight", "age", "sex") VALUES
   (6, 'Корица', 'Йоркширский терьер', 5, 2, 2, 'девочка');
 
-INSERT INTO salary ("salon_id", "position_id", "salary") VALUES (1, 1, 50000);
-INSERT INTO salary ("salon_id", "position_id", "salary") VALUES (2, 2, 35000);
-INSERT INTO salary ("salon_id", "position_id", "salary") VALUES (3, 3, 28000);
-INSERT INTO salary ("salon_id", "position_id", "salary") VALUES (4, 4, 55000);
-INSERT INTO salary ("salon_id", "position_id", "salary") VALUES (5, 5, 20000);
+INSERT INTO salary ("empl_id", "salary") VALUES (1, 50000);
+INSERT INTO salary ("empl_id", "salary") VALUES (2, 35000);
+INSERT INTO salary ("empl_id", "salary") VALUES (3, 28000);
+INSERT INTO salary ("empl_id", "salary") VALUES (4, 55000);
+INSERT INTO salary ("empl_id", "salary") VALUES (5, 20000);
 
 INSERT INTO timetable ("salon_id", "service_id", "empl_id", "client_id", "date_and_time", "dog_id") VALUES
   (1, 2, 1, 1, to_date('2017-12-11 17:00', 'YYYY-MM-DD HH24:MI'), 1);
@@ -215,19 +225,74 @@ INSERT INTO history ("history_id", "payment_id") VALUES (2, 2);
 ----------------------------- CRUD ------------------------------
 
 CREATE OR REPLACE PACKAGE temp AS
+  ids NUMBER;
+
+  -- SALONS --
   PROCEDURE add_salons(salons_id NUMBER, s_location VARCHAR2);
 
   TYPE salons_rec IS RECORD (
-    salon_id NUMBER,
-    locations VARCHAR2(64)
+    s_salon_id NUMBER,
+    s_locations VARCHAR2(64)
   );
   TYPE salons_list IS TABLE OF salons_rec;
-  FUNCTION get_salons(salon_id NUMBER, locations VARCHAR2) RETURN salons_list PIPELINED;
-END temp;
+  FUNCTION get_salons(s_salon_id NUMBER, s_locations VARCHAR2) RETURN salons_list PIPELINED;
 
+  FUNCTION delete_salons(s_salon_id NUMBER, s_locations VARCHAR2) RETURN NUMBER;
+
+  PROCEDURE update_salons(salons_id NUMBER, s_location VARCHAR2);
+
+  -- SERVICE_TYPE
+  PROCEDURE add_service_type(s_service_id NUMBER, s_services_type VARCHAR2, s_description VARCHAR2, s_price NUMBER);
+
+  TYPE service_type_rec is RECORD (
+    s_service_id NUMBER,
+    s_services_type VARCHAR2(64),
+    s_description VARCHAR2(64),
+    s_price NUMBER
+  );
+  TYPE service_type_list IS TABLE OF service_type_rec;
+
+  FUNCTION get_service_type(s_service_id NUMBER, s_services_type VARCHAR2, s_description VARCHAR2, s_price NUMBER)
+    RETURN service_type_list PIPELINED;
+
+  FUNCTION delete_service_type(s_service_id NUMBER, s_services_type VARCHAR2, s_description VARCHAR2, s_price NUMBER)
+    RETURN NUMBER;
+
+  PROCEDURE update_service_type(s_service_id NUMBER, s_services_type VARCHAR2, s_description VARCHAR2, s_price NUMBER);
+
+  -- POSITION
+  PROCEDURE add_position(s_position_id NUMBER, s_pos_name VARCHAR2, s_function VARCHAR2);
+
+  TYPE position_rec is RECORD (
+    s_position_id NUMBER,
+    s_pos_name VARCHAR2(64),
+    s_function VARCHAR2(64)
+  );
+  TYPE position_list is TABLE OF position_rec;
+
+  FUNCTION get_position(s_position_id NUMBER, s_pos_name VARCHAR2, s_function VARCHAR2) RETURN position_list PIPELINED;
+
+  FUNCTION delete_position(s_position_id NUMBER, s_pos_name VARCHAR2, s_function VARCHAR2) RETURN NUMBER;
+
+  PROCEDURE update_position(s_position_id NUMBER, s_pos_name VARCHAR2, s_function VARCHAR2);
+
+
+END temp;
+COMMIT ;
+
+/*
+salons +
+service_type +
+position +
+employees
+client
+dog
+salary
+payment
+history
+*/
 
 CREATE OR REPLACE PACKAGE BODY temp AS
----------------------------- SALONS -------------------------
 
   -- CREATE --
 
@@ -236,52 +301,173 @@ CREATE OR REPLACE PACKAGE BODY temp AS
     INSERT INTO salons("salon_id", "location") VALUES (salons_id, s_location);
   END add_salons;
 
+   PROCEDURE add_service_type(s_service_id NUMBER, s_services_type VARCHAR2, s_description VARCHAR2, s_price NUMBER) AS
+     BEGIN
+       INSERT INTO service_type("service_id", "services_type", "description", "price")
+        VALUES (s_service_id, s_services_type, s_description, s_price);
+    END add_service_type;
 
+  PROCEDURE add_position(s_position_id NUMBER, s_pos_name VARCHAR2, s_function VARCHAR2) AS
+    BEGIN
+      INSERT INTO position("position_id", "pos_name", "function") VALUES (s_position_id, s_pos_name, s_function);
+    END add_position;
 
   -- SELECT --
 
-  FUNCTION get_salons(salons_id in , s_location in VARCHAR2) RETURN salons_list PIPELINED AS
+  FUNCTION get_salons(s_salon_id in NUMBER, s_locations in VARCHAR2)
+    RETURN salons_list PIPELINED AS
     BEGIN
       FOR i IN(
-      SELECT s.SALON_ID, s.LOCATIONS FROM salons s
-      WHERE s.SALON_ID = salons_rec, s.LOCATIONS = salons_rec)
+      SELECT s."salon_id" salon_id, s."location" locations FROM salons s
+      WHERE s."salon_id" = s_salon_id AND s."location" = s_locations)
       LOOP PIPE ROW (i);
         END LOOP;
       RETURN;
       END get_salons;
---
+
+  FUNCTION get_service_type(s_service_id NUMBER, s_services_type VARCHAR2, s_description VARCHAR2, s_price NUMBER)
+    RETURN service_type_list PIPELINED AS
+    BEGIN
+      FOR i IN (
+        SELECT syst."service_id" services_id, syst."services_type" services_type, syst."description" description, syst."price" price
+          FROM service_type syst
+        WHERE syst."service_id"=s_service_id AND syst."services_type"=s_services_type
+          AND syst."description"=s_description AND syst."price"=s_price )
+        LOOP PIPE ROW (i);
+        END LOOP ;
+      RETURN;
+      END get_service_type;
+
+  FUNCTION get_position(s_position_id NUMBER, s_pos_name VARCHAR2, s_function VARCHAR2)
+    RETURN position_list PIPELINED AS
+    BEGIN
+      FOR i IN (
+        SELECT p."position_id" position_id, p."pos_name" pos_name, p."function" functions FROM position p
+        WHERE p."position_id"=s_position_id AND p."pos_name"=s_pos_name AND p."function"=s_function)
+        LOOP PIPE ROW (i);
+        END LOOP ;
+      RETURN ;
+  END get_position;
+
+
+  -- DELETE --
+  FUNCTION delete_salons(s_salon_id NUMBER, s_locations VARCHAR2) RETURN NUMBER IS
+  PRAGMA AUTONOMOUS_TRANSACTION;
+    salon_id NUMBER;
+    locations VARCHAR2(64);
+    BEGIN ids:=0;
+      SELECT "salon_id", "location" INTO salon_id, locations FROM salons WHERE "salon_id"=s_salon_id AND "location"=s_locations;
+      DELETE FROM salons WHERE salon_id="salon_id" AND locations="location" RETURNING "salon_id"
+        INTO ids;
+      COMMIT;
+      RETURN ids;
+      END delete_salons;
+
+  FUNCTION delete_service_type(s_service_id NUMBER, s_services_type VARCHAR2, s_description VARCHAR2, s_price NUMBER)
+    RETURN NUMBER IS PRAGMA AUTONOMOUS_TRANSACTION;
+    service_ids NUMBER;
+    services_types VARCHAR2(64);
+    descriptions VARCHAR2(64);
+    prices NUMBER;
+    BEGIN ids:=0;
+      SELECT "service_id", "services_type", "description", "price" INTO service_ids, services_types, descriptions, prices
+        FROM service_type WHERE "service_id"=s_service_id AND "services_type"=s_services_type
+                                AND "description"=s_description AND "price"=s_price;
+        DELETE FROM service_type WHERE service_ids="service_id"
+                                        AND services_types="services_type"
+                                        AND descriptions="description"
+                                        AND prices="price"  RETURNING "service_id"
+        INTO ids;
+        COMMIT;
+      RETURN ids;
+      END delete_service_type;
+
+  FUNCTION delete_position(s_position_id NUMBER, s_pos_name VARCHAR2, s_function VARCHAR2)
+    RETURN NUMBER IS PRAGMA AUTONOMOUS_TRANSACTION;
+    position_ids NUMBER;
+    pos_names VARCHAR2(64);
+    functions VARCHAR2(64);
+    BEGIN ids:=0;
+      SELECT "position_id", "pos_name", "function" INTO position_ids, pos_names, functions
+        FROM position WHERE "position_id"=s_position_id AND "pos_name"=s_pos_name AND "function"=s_function;
+      DELETE FROM position WHERE position_ids="position_id" AND pos_names="pos_name" AND functions="function" RETURN "position_id"
+        INTO ids;
+      COMMIT ;
+      RETURN ids;
+      END delete_position;
+
+
+  -- UPDATE --
+ PROCEDURE update_salons(salons_id NUMBER, s_location VARCHAR2) AS
+  BEGIN
+    UPDATE salons SET "location"=s_location WHERE (salons_id="salon_id");
+  END update_salons;
+
+  PROCEDURE update_service_type(s_service_id NUMBER, s_services_type VARCHAR2, s_description VARCHAR2, s_price NUMBER) AS
+    BEGIN
+      UPDATE service_type set "services_type"=s_services_type,  "description"=s_description, "price"=s_price WHERE (s_service_id="service_id");
+  END update_service_type;
+
+  PROCEDURE update_position(s_position_id NUMBER, s_pos_name VARCHAR2, s_function VARCHAR2) AS
+    BEGIN
+      UPDATE position SET "pos_name"=s_pos_name, "function"=s_function WHERE s_position_id="position_id";
+  END update_position;
+
 
 END temp;
 
-  create or replace function testFunction(pObject_type in varchar2)
-          return TypeTestList pipelined as
-begin
-  for i in (
-      select tao.OBJECT_NAME, tao.OBJECT_ID, tao.OBJECT_TYPE
-        from all_objects tao
-       where tao.OBJECT_TYPE=pObject_type
-     )
- loop
-   pipe row (TypeTestObject(i.OBJECT_NAME, i.OBJECT_ID, i.OBJECT_TYPE));
-  end loop;
- return;
-end;
-
-
-
-COMMIT;
-
-
-------------------- HOW TO USE ------------------
+------------------------------------- HOW TO USE -------------------------------------
 
 --------------- SALONS --------------
 
 -- ADD
-
 BEGIN
   temp.add_salons(7, 'Крестовский остров');
 END;
 
-  SELECT temp.get_salons("salon_id", "location")  FROM salons;
+-- SELECT
+SELECT * FROM TABLE(temp.get_salons(7, 'Крестовский остров'));
 
-SELECT temp.get_salons("salon_id","location") FROM salons;
+-- DELETE
+SELECT temp.delete_salons(7, 'Крестовский остров') FROM dual;
+
+-- UPDATE --
+BEGIN
+  temp.update_salons(1, 'Чернышевская');
+END;
+
+
+  ----------------  SERVICE_TYPE ---------------
+
+-- ADD
+BEGIN
+  temp.add_service_type(6, 'стрижка лапок', 'стрижка шерсти меду подушечками', 150);
+END;
+-- SELECT
+SELECT * FROM TABLE(temp.get_service_type(6, 'стрижка лапок', 'стрижка шерсти меду подушечками', 160));
+-- DELETE
+SELECT  temp.delete_service_type(6, 'стрижка лапок', 'стрижка шерсти меду подушечками', 150) FROM dual;
+-- UPDATE
+BEGIN
+  temp.update_service_type(6, 'стрижка лапок', 'стрижка шерсти меду подушечками', 160);
+END;
+
+  ------------- POSITION ---------------
+
+-- ADD
+BEGIN
+  temp.add_position(6, 'Груммер', 'Стрижка собак');
+END;
+-- SELECT
+SELECT * FROM TABLE(temp.get_position(6, 'Груммер', 'Стрижка собак'));
+-- DELETE
+SELECT temp.delete_position(6, 'Груммер', 'Стрижка собак') FROM dual;
+-- UPDATE
+BEGIN
+  temp.update_position(6, 'Груммер', 'Модельная стрижка собак');
+END;
+
+  ------------ EMPLOYEES ---------------
+
+
+COMMIT
