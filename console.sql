@@ -343,11 +343,25 @@ CREATE OR REPLACE PACKAGE temp AS
     RETURN NUMBER;
 
   PROCEDURE update_dog(s_dog_id NUMBER, s_dog_name VARCHAR2, s_dog_breed VARCHAR2, s_client_id NUMBER,
-                        s_weight NUMBER, s_age NUMBER, s_sex VARCHAR2);
+                       s_weight NUMBER, s_age NUMBER, s_sex VARCHAR2);
 
+  -- SALARY
+  PROCEDURE add_salary(s_empl_id NUMBER, s_salary NUMBER);
 
- -- SALARY
-  
+  TYPE SALARY_REC IS RECORD (
+    empl_id NUMBER,
+    salary NUMBER
+  );
+  TYPE SALARY_LIST IS TABLE OF SALARY_REC;
+
+  FUNCTION get_salary(s_empl_id NUMBER, s_salary NUMBER)
+    RETURN SALARY_LIST PIPELINED;
+
+  FUNCTION delete_saalry(s_empl_id NUMBER, s_salary NUMBER)
+    RETURN NUMBER;
+
+  PROCEDURE update_salary(s_empl_id NUMBER, s_salary NUMBER);
+
 END temp;
 
 
@@ -398,6 +412,11 @@ CREATE OR REPLACE PACKAGE BODY temp AS
       INSERT INTO dog ("dog_id", "dog_name", "dog_breed", "client_id", "weight", "age", "sex")
       VALUES (s_dog_id, s_dog_name, s_dog_breed, s_client_id, s_weight, s_age, s_sex);
     END add_dog;
+
+  PROCEDURE add_salary(s_empl_id NUMBER, s_salary NUMBER) AS
+    BEGIN
+      INSERT INTO salary ("empl_id", "salary") VALUES (s_empl_id, s_salary);
+    END add_salary;
 
   -- SELECT --
 
@@ -496,11 +515,26 @@ CREATE OR REPLACE PACKAGE BODY temp AS
         d."sex"       sex
       FROM dog d
       WHERE d."dog_id" = s_dog_id AND d."dog_name" = s_dog_name AND d."dog_breed" = s_dog_breed AND
-            d."client_id" = s_client_id AND d."weight" = s_weight AND d."age"=s_age AND d."sex"=s_sex )
+            d."client_id" = s_client_id AND d."weight" = s_weight AND d."age" = s_age AND d."sex" = s_sex )
       LOOP PIPE ROW (i);
       END LOOP;
       RETURN;
     END get_dog;
+
+
+  FUNCTION get_salary(s_empl_id NUMBER, s_salary NUMBER)
+    RETURN SALARY_LIST PIPELINED AS
+    BEGIN
+      FOR i IN (
+        SELECT
+          sal."empl_id" empl_id, sal."salary" salary FROM salary sal
+          WHERE sal."empl_id"=s_empl_id AND sal."salary"=s_salary )
+        LOOP PIPE ROW (i);
+        END LOOP;
+      RETURN;
+    END get_salary();
+
+
 
   -- DELETE --
   FUNCTION delete_salons(s_salon_id NUMBER, s_locations VARCHAR2)
@@ -651,9 +685,27 @@ CREATE OR REPLACE PACKAGE BODY temp AS
             ages = "age" AND sexs = "sex"
       RETURN "dog_id"
       INTO ids;
-      COMMIT ;
+      COMMIT;
       RETURN ids;
     END delete_dog;
+
+   FUNCTION delete_saalry(s_empl_id NUMBER, s_salary NUMBER)
+    RETURN NUMBER IS PRAGMA AUTONOMOUS_TRANSACTION;
+     empl_ids NUMBER;
+     salarys NUMBER;
+     BEGIN ids:=0;
+       SELECT "empl_id", "salary" INTO empl_ids, salarys
+         FROM salary
+           WHERE "empl_id"=s_empl_id AND "salary"=s_salary;
+       DELETE FROM salary
+         WHERE empl_ids="empl_id" AND salarys="salary"
+         RETURN "empl_id"
+           INTO ids;
+       COMMIT ;
+       RETURN ids;
+       END delete_saalry;
+
+
 
   -- UPDATE --
   PROCEDURE update_salons(salons_id NUMBER, s_location VARCHAR2) AS
@@ -695,14 +747,16 @@ CREATE OR REPLACE PACKAGE BODY temp AS
     END update_client;
 
   PROCEDURE update_dog(s_dog_id NUMBER, s_dog_name VARCHAR2, s_dog_breed VARCHAR2, s_client_id NUMBER,
-                        s_weight NUMBER, s_age NUMBER, s_sex VARCHAR2) AS
+                       s_weight NUMBER, s_age NUMBER, s_sex VARCHAR2) AS
     BEGIN
       UPDATE dog
-        SET "dog_name" = s_dog_name,
-            "dog_breed" = s_dog_breed, "client_id" = s_client_id,
-          "weight" = s_weight, "age" = s_age, "sex" = s_sex
-      WHERE s_dog_id="dog_id";
-      END update_dog;
+      SET "dog_name" = s_dog_name,
+        "dog_breed"  = s_dog_breed, "client_id" = s_client_id,
+        "weight"     = s_weight, "age" = s_age, "sex" = s_sex
+      WHERE s_dog_id = "dog_id";
+    END update_dog;
+
+  PROCEDURE update_salary(s_empl_id NUMBER, s_salary NUMBER);
 
 END temp;
 ------------------------------------- HOW TO USE -------------------------------------
@@ -801,9 +855,10 @@ BEGIN
 END;
 -- SELECT
 SELECT *
-  FROM TABLE (temp.get_dog(7, 'Жуля', 'Йоркширский терьер', 5, 2, 2, 'девочка'));
+FROM TABLE (temp.get_dog(7, 'Жуля', 'Йоркширский терьер', 5, 2, 2, 'девочка'));
 -- DELETE
-SELECT temp.delete_dog(7, 'Жуля', 'Йоркширский терьер', 5, 2, 2, 'девочка') FROM dual;
+SELECT temp.delete_dog(7, 'Жуля', 'Йоркширский терьер', 5, 2, 2, 'Девочка')
+FROM dual;
 -- UPDATE
 BEGIN
   temp.update_dog(7, 'Жуля', 'Йоркширский терьер', 5, 2, 2, 'Мальчик');
