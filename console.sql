@@ -349,28 +349,38 @@ CREATE OR REPLACE PACKAGE temp AS
   PROCEDURE add_salary(s_empl_id NUMBER, s_salary NUMBER);
 
   TYPE SALARY_REC IS RECORD (
-    empl_id NUMBER,
-    salary NUMBER
+    s_empl_id NUMBER,
+    s_salary NUMBER
   );
   TYPE SALARY_LIST IS TABLE OF SALARY_REC;
 
   FUNCTION get_salary(s_empl_id NUMBER, s_salary NUMBER)
     RETURN SALARY_LIST PIPELINED;
 
-  FUNCTION delete_saalry(s_empl_id NUMBER, s_salary NUMBER)
+  FUNCTION delete_salary(s_empl_id NUMBER, s_salary NUMBER)
     RETURN NUMBER;
 
   PROCEDURE update_salary(s_empl_id NUMBER, s_salary NUMBER);
 
+  -- HISTORY
+
+  PROCEDURE add_history(s_history_id NUMBER, s_payment_id NUMBER);
+
+  TYPE HISTORY_REC IS RECORD (
+    s_history_id NUMBER,
+    s_payment_id NUMBER
+  );
+  TYPE HISTORY_LIST IS TABLE OF HISTORY_REC;
+
+  FUNCTION get_history(s_history_id NUMBER, s_payment_id NUMBER)
+    RETURN HISTORY_LIST PIPELINED;
+
+  FUNCTION delete_history(s_history_id NUMBER, s_payment_id NUMBER)
+    RETURN NUMBER;
+
+  PROCEDURE update_history(s_history_id NUMBER, s_payment_id NUMBER);
+
 END temp;
-
-
-/*
-salary
-payment
-history
-timetable
-*/
 
 CREATE OR REPLACE PACKAGE BODY temp AS
 
@@ -417,6 +427,11 @@ CREATE OR REPLACE PACKAGE BODY temp AS
     BEGIN
       INSERT INTO salary ("empl_id", "salary") VALUES (s_empl_id, s_salary);
     END add_salary;
+
+  PROCEDURE add_history(s_history_id NUMBER, s_payment_id NUMBER) AS
+    BEGIN
+      INSERT INTO history ("history_id", "payment_id") VALUES (s_history_id, s_payment_id);
+    END add_history;
 
   -- SELECT --
 
@@ -526,15 +541,27 @@ CREATE OR REPLACE PACKAGE BODY temp AS
     RETURN SALARY_LIST PIPELINED AS
     BEGIN
       FOR i IN (
-        SELECT
-          sal."empl_id" empl_id, sal."salary" salary FROM salary sal
-          WHERE sal."empl_id"=s_empl_id AND sal."salary"=s_salary )
+      SELECT
+        sal."empl_id" empl_id,
+        sal."salary"  salary
+      FROM salary sal
+      WHERE sal."empl_id" = s_empl_id AND sal."salary" = s_salary )
+      LOOP PIPE ROW (i);
+      END LOOP;
+      RETURN;
+    END get_salary;
+
+  FUNCTION get_history(s_history_id NUMBER, s_payment_id NUMBER)
+    RETURN HISTORY_LIST PIPELINED AS
+    BEGIN
+      FOR i IN (
+        SELECT h."history_id" history_id, h."payment_id" payment_id
+        FROM history h
+          WHERE h."history_id"=s_history_id AND h."payment_id"=s_payment_id)
         LOOP PIPE ROW (i);
         END LOOP;
-      RETURN;
-    END get_salary();
-
-
+        RETURN;
+    END get_history;
 
   -- DELETE --
   FUNCTION delete_salons(s_salon_id NUMBER, s_locations VARCHAR2)
@@ -689,23 +716,42 @@ CREATE OR REPLACE PACKAGE BODY temp AS
       RETURN ids;
     END delete_dog;
 
-   FUNCTION delete_saalry(s_empl_id NUMBER, s_salary NUMBER)
+  FUNCTION delete_salary(s_empl_id NUMBER, s_salary NUMBER)
     RETURN NUMBER IS PRAGMA AUTONOMOUS_TRANSACTION;
-     empl_ids NUMBER;
-     salarys NUMBER;
-     BEGIN ids:=0;
-       SELECT "empl_id", "salary" INTO empl_ids, salarys
-         FROM salary
-           WHERE "empl_id"=s_empl_id AND "salary"=s_salary;
-       DELETE FROM salary
-         WHERE empl_ids="empl_id" AND salarys="salary"
-         RETURN "empl_id"
-           INTO ids;
-       COMMIT ;
-       RETURN ids;
-       END delete_saalry;
+    empl_ids NUMBER;
+    salarys  NUMBER;
+    BEGIN ids := 0;
+      SELECT
+        "empl_id",
+        "salary"
+      INTO empl_ids, salarys
+      FROM salary
+      WHERE "empl_id" = s_empl_id AND "salary" = s_salary;
+      DELETE FROM salary
+      WHERE empl_ids = "empl_id" AND salarys = "salary"
+      RETURN "empl_id"
+      INTO ids;
+      COMMIT;
+      RETURN ids;
+    END delete_salary;
 
-
+  FUNCTION delete_history(s_history_id NUMBER, s_payment_id NUMBER)
+    RETURN NUMBER IS PRAGMA AUTONOMOUS_TRANSACTION;
+    history_ids NUMBER;
+    payment_ids NUMBER;
+    BEGIN ids := 0;
+      SELECT
+        "history_id",
+        "payment_id"
+      INTO history_ids, payment_ids
+      FROM history
+      WHERE "history_id" = s_history_id AND "payment_id" = s_payment_id;
+      DELETE FROM history
+      WHERE history_ids = "history_id" AND payment_ids = "payment_id"
+      RETURN "history_id" INTO ids;
+      COMMIT;
+      RETURN ids;
+    END delete_history;
 
   -- UPDATE --
   PROCEDURE update_salons(salons_id NUMBER, s_location VARCHAR2) AS
@@ -756,8 +802,19 @@ CREATE OR REPLACE PACKAGE BODY temp AS
       WHERE s_dog_id = "dog_id";
     END update_dog;
 
-  PROCEDURE update_salary(s_empl_id NUMBER, s_salary NUMBER);
+  PROCEDURE update_salary(s_empl_id NUMBER, s_salary NUMBER) AS
+    BEGIN
+      UPDATE salary
+      SET "salary" = s_salary
+      WHERE s_empl_id = "empl_id";
+    END update_salary;
 
+  PROCEDURE update_history(s_history_id NUMBER, s_payment_id NUMBER) AS
+    BEGIN
+      UPDATE history
+      SET "payment_id" = s_payment_id
+      WHERE s_history_id = "history_id";
+    END update_history;
 END temp;
 ------------------------------------- HOW TO USE -------------------------------------
 
@@ -862,6 +919,36 @@ FROM dual;
 -- UPDATE
 BEGIN
   temp.update_dog(7, 'Жуля', 'Йоркширский терьер', 5, 2, 2, 'Мальчик');
+END;
+
+--------------- SALARY -------------
+-- ADD
+BEGIN
+  temp.add_salary(6, 9000);
+END;
+-- SELECT
+SELECT *
+FROM TABLE (temp.get_salary(5, 20000));
+-- DELETE
+SELECT temp.delete_salary(6, 9000)
+FROM dual;
+-- UPDATE
+BEGIN
+  temp.update_salary(6, 9000);
+END;
+
+-- HISTORY
+-- ADD
+BEGIN
+  temp.add_history(3, 1);
+END;
+-- SELECT
+SELECT  * FROM TABLE (temp.get_history(3,1));
+-- DELETE
+SELECT temp.delete_history(3, 1) FROM dual;
+-- UPDATE
+BEGIN
+  temp.update_history(3,2);
 END;
 
 COMMIT
